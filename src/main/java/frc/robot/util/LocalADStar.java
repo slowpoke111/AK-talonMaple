@@ -25,7 +25,7 @@ public class LocalADStar implements Pathfinder {
   private double fieldLength = 16.54;
   private double fieldWidth = 8.02;
 
-  private double nodeSize = 0.2;
+  private double nodeSize = 0.3;
 
   private int nodesX = (int) Math.ceil(fieldLength / nodeSize);
   private int nodesY = (int) Math.ceil(fieldWidth / nodeSize);
