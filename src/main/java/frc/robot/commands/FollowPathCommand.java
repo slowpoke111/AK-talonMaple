@@ -5,9 +5,11 @@
 package frc.robot.commands;
 
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.util.LocalADStarAK;
 
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
+import com.pathplanner.lib.pathfinding.Pathfinding;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -36,6 +38,7 @@ public class FollowPathCommand extends Command {
 
   @Override
   public void initialize() {
+    Pathfinding.setPathfinder(new LocalADStarAK());
     AutoBuilder.pathfindToPose(m_targetPose, m_constraints).schedule();
   }
 
