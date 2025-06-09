@@ -1,4 +1,3 @@
-
 package frc.robot.subsystems.vision;
 
 import static frc.robot.subsystems.vision.VisionConstants.*;
@@ -42,6 +41,46 @@ public class Vision extends SubsystemBase {
 
     public Rotation2d getTargetX(int cameraIndex) {
         return inputs[cameraIndex].latestTargetObservation.tx();
+    }
+
+    /**
+     * Gets a list of currently visible AprilTag IDs from all cameras
+     * @return List of visible AprilTag IDs
+     */
+    public List<Integer> getVisibleAprilTags() {
+        List<Integer> visibleTags = new LinkedList<>();
+        
+        for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
+            if (inputs[cameraIndex].connected) {
+                for (int tagId : inputs[cameraIndex].tagIds) {
+                    if (!visibleTags.contains(tagId)) {
+                        visibleTags.add(tagId);
+                    }
+                }
+            }
+        }
+        
+        return visibleTags;
+    }
+
+    /**
+     * Gets the distance to the nearest visible AprilTag
+     * @return Distance in meters, or Double.POSITIVE_INFINITY if no tags visible
+     */
+    public double getNearestTagDistance() {
+        double minDistance = Double.POSITIVE_INFINITY;
+        
+        for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
+            if (inputs[cameraIndex].connected) {
+                for (var observation : inputs[cameraIndex].poseObservations) {
+                    if (observation.averageTagDistance() < minDistance) {
+                        minDistance = observation.averageTagDistance();
+                    }
+                }
+            }
+        }
+        
+        return minDistance;
     }
 
     @Override

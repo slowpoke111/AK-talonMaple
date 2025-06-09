@@ -21,6 +21,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.FollowPathCommand;
+import frc.robot.commands.PIDAlignCommand;
+import frc.robot.commands.AutoAlignCommand;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.vision.*;
@@ -106,9 +108,12 @@ public class RobotContainer {
         drive.setDefaultCommand(DriveCommands.joystickDrive(
                 drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () -> -controller.getRightX()));
 
-        controller.a().onTrue(new FollowPathCommand(drive, new Pose2d(2,2,new Rotation2d())).withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+        // Auto-align to nearest scoring zone using vision (A button)
+        controller.a().onTrue(new AutoAlignCommand(drive,vision).withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
-        controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+
+        // Example path following command (Right Bumper)
+        controller.rightBumper().onTrue(new FollowPathCommand(drive, new Pose2d(2,2,new Rotation2d())).withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
         final Runnable resetOdometry = Constants.currentMode == Constants.Mode.SIM
                 ? () -> drive.resetOdometry(driveSimulation.getSimulatedDriveTrainPose())

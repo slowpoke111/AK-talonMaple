@@ -20,7 +20,7 @@ import com.pathplanner.lib.pathfinding.Pathfinder;
 
 public class LocalADStar implements Pathfinder {
   private static final double SMOOTHING_ANCHOR_PCT = 0.8;
-  private static final double EPS = 2.5;
+  private static final double EPS = 2.5;//tune
 
   private double fieldLength = 16.54;
   private double fieldWidth = 8.02;
