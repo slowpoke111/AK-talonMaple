@@ -28,6 +28,9 @@ import edu.wpi.first.math.geometry.Pose3d;
 import org.littletonrobotics.junction.AutoLog;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.units.measure.Angle;
@@ -99,7 +102,7 @@ public class AutoAlignToReefCommand extends Command {
 
         return (secondPIDStarted && timerPID.hasElapsed(3)) || 
                timerTotal.hasElapsed(8) ||
-               (secondPIDStarted && secondPIDAlign.isFinished());
+               (secondPIDStarted && secondPIDAlign.isFinished())  ;
     }
 
     public void end(boolean interrupted) {
