@@ -22,7 +22,8 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.FollowPathCommand;
 import frc.robot.commands.PIDAlignCommand;
-import frc.robot.commands.AutoAlignCommand;
+import frc.robot.commands.AutoAlignToReefCommand;
+import frc.robot.commands.AutoAlignToTagCommand;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.*;
 import frc.robot.subsystems.vision.*;
@@ -109,7 +110,7 @@ public class RobotContainer {
                 drive, () -> -controller.getLeftY(), () -> -controller.getLeftX(), () -> -controller.getRightX()));
 
         // Auto-align to nearest scoring zone using vision (A button)
-        controller.a().onTrue(new AutoAlignCommand(drive,vision).withInterruptBehavior(InterruptionBehavior.kCancelSelf));
+        controller.a().onTrue(new AutoAlignToReefCommand(drive,vision).withInterruptBehavior(InterruptionBehavior.kCancelSelf));
 
 
         // Example path following command (Right Bumper)
