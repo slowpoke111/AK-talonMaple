@@ -48,9 +48,10 @@ public class AutoAlignToReefCommand extends Command {
     private AprilTag m_TargetTag = null;
     private Pose2d targetPose = null;
     private Command firstAlign;
-    private Command secondPIDAlign;
-    private boolean firstAlignFinished = false;
-    private boolean secondPIDStarted = false;
+    private Command secondAlign;
+    private Command thirdAlign;
+    private Command fullAlign;
+
     private Timer timerPID = new Timer();
     private Timer timerTotal = new Timer();
 
@@ -64,53 +65,67 @@ public class AutoAlignToReefCommand extends Command {
         if (m_TargetTag == null) {
             m_TargetTag = getNearestTag();
         }
-        targetPose = m_TargetTag.pose.toPose2d()
-                .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(180)));
+        if (m_TargetTag != null) {
+            Logger.recordOutput("AutoAlignToReefCommand/TargetTagID", m_TargetTag.ID);
+            targetPose = m_TargetTag.pose.toPose2d()
+                    .plus(new Transform2d(new Translation2d(), Rotation2d.fromDegrees(180)));
+            Logger.recordOutput("AutoAlignToReefCommand/TargetPose", targetPose);
+        } else {
+            Logger.recordOutput("AutoAlignToReefCommand/TargetTagID", -1); // Indicate no tag found
+            Logger.recordOutput("AutoAlignToReefCommand/TargetPose", new Pose2d()); // Log default pose
+            // Handle case where no tag is found, perhaps by ending the command
+            DriverStation.reportError("AutoAlignToReefCommand: No target AprilTag found.", false);
+            cancel(); // End the command if no tag is found
+            return;
+        }
         
         firstAlign = new PIDAlignCommand(m_Swerve, new Pose2d(m_Swerve.getPose().getTranslation(), targetPose.getRotation()))
                 .withTimeout(1)
-                .withInterruptBehavior(InterruptionBehavior.kCancelSelf)
-                .andThen(new FollowPathCommand(m_Swerve, targetPose)
-                        .withInterruptBehavior(InterruptionBehavior.kCancelSelf));
-
-        secondPIDAlign = new PIDAlignCommand(m_Swerve, targetPose)
-                .withTimeout(3)
                 .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
 
-        firstAlignFinished = false;
-        secondPIDStarted = false;
+        secondAlign = new FollowPathCommand(m_Swerve, targetPose)
+        .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+
+        thirdAlign = new PIDAlignCommand(m_Swerve, targetPose)
+                .withTimeout(2)
+                .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+        
+        fullAlign = firstAlign.andThen(secondAlign).andThen(thirdAlign)
+                .withInterruptBehavior(InterruptionBehavior.kCancelSelf);
+        
+
         timerPID.reset();
         timerTotal.reset();
         timerTotal.start();
 
-        firstAlign.schedule();
+        fullAlign.schedule();
+        Logger.recordOutput("AutoAlignToReefCommand/Initialized", true);
     }
 
     public void execute() {
-        if (firstAlign.isFinished() && !firstAlignFinished) {
-            firstAlignFinished = true;
-        }
-        
-        if (firstAlignFinished && !secondPIDStarted) {
-            secondPIDStarted = true;
-            timerPID.start();
-            secondPIDAlign.schedule();
+        Logger.recordOutput("AutoAlignToReefCommand/TimerPID", timerPID.get());
+        Logger.recordOutput("AutoAlignToReefCommand/TimerTotal", timerTotal.get());
+        if (fullAlign != null) {
+            Logger.recordOutput("AutoAlignToReefCommand/FullAlignIsScheduled", fullAlign.isScheduled());
+            Logger.recordOutput("AutoAlignToReefCommand/FullAlignIsFinished", fullAlign.isFinished());
         }
     }
 
     public boolean isFinished() {
+        boolean fullAlignDone = fullAlign != null && fullAlign.isFinished();
+        boolean timerElapsed = timerTotal.hasElapsed(8);
+        boolean result = fullAlignDone || timerElapsed;
 
-        return (secondPIDStarted && timerPID.hasElapsed(3)) || 
-               timerTotal.hasElapsed(8) ||
-               (secondPIDStarted && secondPIDAlign.isFinished())  ;
+        Logger.recordOutput("AutoAlignToReefCommand/IsFinished/FullAlignDone", fullAlignDone);
+        Logger.recordOutput("AutoAlignToReefCommand/IsFinished/TimerElapsed", timerElapsed);
+        Logger.recordOutput("AutoAlignToReefCommand/IsFinished/Result", result);
+        
+        return result;
     }
 
     public void end(boolean interrupted) {
-        if (firstAlign != null && !firstAlign.isFinished()) {
-            firstAlign.cancel();
-        }
-        if (secondPIDAlign != null && !secondPIDAlign.isFinished()) {
-            secondPIDAlign.cancel();
+        if (fullAlign != null) {
+            fullAlign.cancel();
         }
         
         timerPID.stop();
@@ -118,11 +133,10 @@ public class AutoAlignToReefCommand extends Command {
         timerTotal.stop();
         timerTotal.reset();
         
-        firstAlignFinished = false;
-        secondPIDStarted = false;
         m_TargetTag = null;
         targetPose = null;
-        
+        Logger.recordOutput("AutoAlignToReefCommand/EndedInterrupted", interrupted);
+        Logger.recordOutput("AutoAlignToReefCommand/Initialized", false);
     }
 
     public AprilTag getNearestTag() {
