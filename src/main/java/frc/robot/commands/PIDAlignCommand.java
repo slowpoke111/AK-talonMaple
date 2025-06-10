@@ -16,7 +16,7 @@ public class PIDAlignCommand extends Command {
     private final PIDController m_rotationController;
     
     private static final double POSITION_TOLERANCE = 0.05; //m
-    private static final double ROTATION_TOLERANCE = 1; //deg 
+    private static final double ROTATION_TOLERANCE = 0.2; //deg 
     
     private static final double kP_X = 1.2;
     private static final double kI_X = 0.0;
